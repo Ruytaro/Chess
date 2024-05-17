@@ -7,16 +7,15 @@ public class Chess {
 		game.initBoard();
 		System.out.print(game.showBoard());
 		String move = "A2A4";
-		if (game.movePiece(move.toCharArray()))
-			System.out.print(game.showBoard());
-		move = "B7B5";
-		if (game.movePiece(move.toCharArray()))
-			System.out.print(game.showBoard());
-		move = "A4B5";
-		if (game.movePiece(move.toCharArray()))
-			System.out.print(game.showBoard());
+		game.movePiece(move.toCharArray());
+		move = "A7A5";
+		game.movePiece(move.toCharArray());
 		move = "A4A5";
-		if (game.movePiece(move.toCharArray()))
-			System.out.print(game.showBoard());
+		game.movePiece(move.toCharArray());
+		move = "B7B5";
+		game.movePiece(move.toCharArray());
+		move = "A4B5";
+		game.movePiece(move.toCharArray());
+		System.out.print(game.showBoard());
 	}
 }

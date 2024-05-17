@@ -33,16 +33,16 @@ public class Board {
 			j = 7;
 		}
 		for (int i = 0; i < 8; i++) {
-			board[p][i] = new Pawn(c);
+			board[i][p] = new Pawn(c);
 		}
-		board[j][0] = new Rook(c);
-		board[j][1] = new Knight(c);
-		board[j][2] = new Bishop(c);
-		board[j][3] = new Queen(c);
-		board[j][4] = new King(c);
-		board[j][5] = new Bishop(c);
-		board[j][6] = new Knight(c);
-		board[j][7] = new Rook(c);
+		board[0][j] = new Rook(c);
+		board[1][j] = new Knight(c);
+		board[2][j] = new Bishop(c);
+		board[3][j] = new Queen(c);
+		board[4][j] = new King(c);
+		board[5][j] = new Bishop(c);
+		board[6][j] = new Knight(c);
+		board[7][j] = new Rook(c);
 	}
 
 	public String showBoard() {
@@ -51,7 +51,7 @@ public class Board {
 			int n = 8 - i;
 			t += n + "  ";
 			for (int j = 0; j < 8; j++) {
-				Piece p = board[n - 1][j];
+				Piece p = board[j][n - 1];
 				if (p instanceof Piece) {
 					t += p + " ";
 				} else {
@@ -69,9 +69,15 @@ public class Board {
 		if (target == null)
 			return false;
 		System.out.println(target);
-		boolean eat = board[position[2]][position[3]] != null;
-		int[] dest = { position[3] - position[1], position[2] - position[0] };
-		if (target.canMakeMove(dest,eat))
+		int[] dest = { position[2] - position[0], position[3] - position[1] };
+		boolean eat = false;
+		if (board[position[2]][position[3]] != null) {
+			if (target.getPlayer().equals(board[position[2]][position[3]].getPlayer())) {
+				return false;
+			}
+			eat = true;
+		}
+		if (target.canMakeMove(dest, eat))
 			return true;
 		return false;
 	}
@@ -86,15 +92,8 @@ public class Board {
 			if (t > 7 || t < 0)
 				return null;
 			target[i] = t;
-			System.out.print(t + " ");
 		}
-		return fixInput(target);
-
-	}
-
-	private int[] fixInput(int[] target) {
-		int[] fixed = { target[1], target[0], target[3], target[2] };
-		return fixed;
+		return target;
 	}
 
 	public boolean movePiece(char[] movement) {

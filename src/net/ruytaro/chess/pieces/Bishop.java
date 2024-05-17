@@ -2,7 +2,7 @@ package net.ruytaro.chess.pieces;
 
 import net.ruytaro.chess.Color;
 
-public class Bishop extends Piece{
+public class Bishop extends Piece {
 
 	public Bishop(Color player) {
 		super(player);
@@ -11,20 +11,27 @@ public class Bishop extends Piece{
 
 	@Override
 	public boolean canMakeMove(int[] dest, boolean eats) {
-		// TODO Auto-generated method stub
-		return false;
+		int aux = (10 + dest[0]) * 100 + (10 + dest[1]);
+		Boolean temp = movements.get(aux);
+		if (temp == null)
+			return false;
+		return true;
 	}
 
 	@Override
 	public void setMovements(Color p) {
-		// TODO Auto-generated method stub
-		
+		for (int i = 1; i < 8; i++) {
+			int aux = (10 + i) * 100 + (10 + i);
+			movements.put(aux, true);
+			aux = (10 - i) * 100 + (10 - i);
+			movements.put(aux, true);
+		}
 	}
 
 	@Override
 	public void move() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

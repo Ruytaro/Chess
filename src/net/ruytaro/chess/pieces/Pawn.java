@@ -1,10 +1,5 @@
 package net.ruytaro.chess.pieces;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import net.ruytaro.chess.Color;
 
 public class Pawn extends Piece {
