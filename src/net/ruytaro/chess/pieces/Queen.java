@@ -9,4 +9,21 @@ public class Queen extends Piece {
 		this.rep = "q";
 	}
 
+	@Override
+	public boolean canMakeMove(int[] dest, boolean eats) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setMovements(Color p) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void move() {
+		// TODO Auto-generated method stub
+		
+	}
 }
