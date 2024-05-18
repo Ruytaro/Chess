@@ -13,14 +13,14 @@ import net.ruytaro.chess.pieces.Rook;
 
 public class Board {
 
-	Piece[][] board = new Piece[8][8];
-	List<Piece> death = new ArrayList<Piece>();
-	GameStatus status = GameStatus.PREPARING;
+	private Piece[][] board = new Piece[8][8];
+	private List<Piece> death = new ArrayList<Piece>();
+	private GameStatus status = GameStatus.PREPARING;
 
 	public void initBoard() {
 		placePieces(Color.WHITE);
 		placePieces(Color.BLACK);
-		status = GameStatus.READY;
+		setStatus(GameStatus.READY);
 	}
 
 	public void placePieces(Color c) {
@@ -68,18 +68,24 @@ public class Board {
 		Piece target = board[position[0]][position[1]];
 		if (target == null)
 			return false;
-		System.out.println(target);
-		int[] dest = { position[2] - position[0], position[3] - position[1] };
+		int[] dest = calculateOffset(position);
+		Piece p = board[position[2]][position[3]];
 		boolean eat = false;
-		if (board[position[2]][position[3]] != null) {
-			if (target.getPlayer().equals(board[position[2]][position[3]].getPlayer())) {
+		if (p != null) {
+			if (p.getPlayer().equals(target.getPlayer())) {
 				return false;
+			} else {
+				eat = true;
 			}
-			eat = true;
 		}
 		if (target.canMakeMove(dest, eat))
 			return true;
 		return false;
+	}
+
+	private int[] calculateOffset(int[] position) {
+		int[] dest = { position[2] - position[0], position[3] - position[1] };
+		return dest;
 	}
 
 	private int[] validateInput(char[] position) {
@@ -100,11 +106,11 @@ public class Board {
 		int[] position = validateInput(movement);
 		if (position == null)
 			return false;
-		if (canMakeMovement(position)) {
-			makeMove(position);
-			return true;
-		}
-		return false;
+		if (!canMakeMovement(position))
+			return false;
+		makeMove(position);
+		return true;
+
 	}
 
 	private void makeMove(int[] position) {
@@ -114,5 +120,13 @@ public class Board {
 		board[position[2]][position[3]] = board[position[0]][position[1]];
 		board[position[0]][position[1]] = null;
 		return;
+	}
+
+	public GameStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(GameStatus status) {
+		this.status = status;
 	}
 }
