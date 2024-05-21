@@ -1,7 +1,6 @@
 package net.ruytaro.chess;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.ruytaro.chess.pieces.Bishop;
@@ -15,9 +14,18 @@ import net.ruytaro.chess.pieces.Rook;
 public class Board {
 
 	private Piece[][] board = new Piece[8][8];
-	private List<Piece> death = new ArrayList<Piece>();
+	private List<Piece> death = new LinkedList<Piece>();
 	private GameStatus status = GameStatus.PREPARING;
-	private List<int[]> movements = new ArrayList<int[]>();
+	private List<int[]> movements = new LinkedList<int[]>();
+	private Color player;
+
+	public Color getPlayer() {
+		return player;
+	}
+
+	public void setPlayer(Color player) {
+		this.player = player;
+	}
 
 	public void initBoard() {
 		placePieces(Color.WHITE);
@@ -82,16 +90,15 @@ public class Board {
 			}
 		}
 		if (target.canMakeMove(offset, eat)) {
-			if (pathClear(move, eat)) {
+			if (target instanceof Knight)
 				return true;
-			}
+			return pathClear(move, eat);
 		}
 		return false;
 	}
 
 	// checks if the path to move is clear
 	private boolean pathClear(int[] position, boolean eats) {
-
 		int maxX = Math.max(position[0], position[2]);
 		int maxY = Math.max(position[1], position[3]);
 		int minX = Math.min(position[0], position[2]);
@@ -165,12 +172,17 @@ public class Board {
 
 	// actually moves the piece on the board
 	private void makeMove(int[] position) {
-		if (board[position[2]][position[3]] != null)
-			death.add(board[position[2]][position[3]]);
+		if (board[position[2]][position[3]] != null) {
+			Piece p = board[position[2]][position[3]];
+			if (p instanceof King)
+				status = GameStatus.END;
+			death.add(p);
+			board[position[2]][position[3]] = null;
+
+		}
 		board[position[0]][position[1]].move();
 		board[position[2]][position[3]] = board[position[0]][position[1]];
 		board[position[0]][position[1]] = null;
-		return;
 	}
 
 	public GameStatus getStatus() {

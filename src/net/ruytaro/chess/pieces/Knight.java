@@ -11,20 +11,37 @@ public class Knight extends Piece {
 
 	@Override
 	public boolean canMakeMove(int[] dest, boolean eats) {
-		// TODO Auto-generated method stub
-		return false;
+		int aux = (10 + dest[0]) * 100 + (10 + dest[1]);
+		Boolean temp = movements.get(aux);
+		if (temp == null)
+			return false;
+		return true;
 	}
 
 	@Override
 	public void setMovements(Color p) {
-		// TODO Auto-generated method stub
-		
+		int aux = (10 + 1) * 100 + (10 + 2);
+		movements.put(aux, true);
+		aux = (10 + 2) * 100 + (10 + 1);
+		movements.put(aux, true);
+		aux = (10 - 1) * 100 + (10 + 2);
+		movements.put(aux, true);
+		aux = (10 - 2) * 100 + (10 + 1);
+		movements.put(aux, true);
+		aux = (10 - 1) * 100 + (10 - 2);
+		movements.put(aux, true);
+		aux = (10 - 2) * 100 + (10 - 1);
+		movements.put(aux, true);
+		aux = (10 + 1) * 100 + (10 - 2);
+		movements.put(aux, true);
+		aux = (10 + 2) * 100 + (10 - 1);
+		movements.put(aux, true);
 	}
 
 	@Override
 	public void move() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

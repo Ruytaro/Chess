@@ -13,23 +13,35 @@ public class Chess {
 	public static void playGame(Board game) {
 		Scanner sc = new Scanner(System.in);
 		Color[] turn = { Color.WHITE, Color.BLACK };
+		game.setStatus(GameStatus.ONGOING);
+
 		boolean quit = false;
 		do {
 			for (Color player : turn) {
+				game.setPlayer(player);
+				if (quit) {
+					game.setStatus(GameStatus.END);
+					break;
+				}
 				System.out.print(game.showBoard());
-				boolean ok;
-				do {
+				boolean ok = false;
+				while (!ok) {
 					String in = getInput(sc, player);
 					if (in.equals("QUIT")) {
 						quit = true;
+						break;
 					}
 					ok = game.movePiece(in.toCharArray());
-				} while (!(ok || quit));
-				if (quit)
-					break;
+				}
+				;
 			}
-		} while (!quit);
+		} while (gameOngoing(game));
 		sc.close();
+		System.out.printf("Player %s wins!!", game.getPlayer());
+	}
+
+	private static boolean gameOngoing(Board game) {
+		return game.getStatus().equals(GameStatus.ONGOING);
 	}
 
 	private static String getInput(Scanner sc, Color p) {
