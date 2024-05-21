@@ -20,7 +20,7 @@ public class Chess {
 				boolean ok;
 				do {
 					String in = getInput(sc, player);
-					if (in.equals("quit")) {
+					if (in.equals("QUIT")) {
 						quit = true;
 					}
 					ok = game.movePiece(in.toCharArray());
@@ -37,6 +37,6 @@ public class Chess {
 		if (p.equals(Color.BLACK))
 			h = ">";
 		System.out.print(h);
-		return sc.nextLine();
+		return sc.nextLine().toUpperCase();
 	}
 }

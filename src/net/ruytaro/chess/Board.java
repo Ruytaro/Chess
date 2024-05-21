@@ -1,6 +1,7 @@
 package net.ruytaro.chess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import net.ruytaro.chess.pieces.Bishop;
@@ -16,6 +17,7 @@ public class Board {
 	private Piece[][] board = new Piece[8][8];
 	private List<Piece> death = new ArrayList<Piece>();
 	private GameStatus status = GameStatus.PREPARING;
+	private List<int[]> movements = new ArrayList<int[]>();
 
 	public void initBoard() {
 		placePieces(Color.WHITE);
@@ -64,30 +66,76 @@ public class Board {
 		return t;
 	}
 
-	private boolean canMakeMovement(int[] position) {
-		Piece target = board[position[0]][position[1]];
+	// checks if the movement is allowed
+	private boolean canMakeMovement(int[] move) {
+		Piece target = board[move[0]][move[1]];
 		if (target == null)
 			return false;
-		int[] dest = calculateOffset(position);
-		Piece p = board[position[2]][position[3]];
+		int[] offset = calculateOffset(move);
+		Piece destPlace = board[move[2]][move[3]];
 		boolean eat = false;
-		if (p != null) {
-			if (p.getPlayer().equals(target.getPlayer())) {
+		if (destPlace != null) {
+			if (destPlace.getPlayer().equals(target.getPlayer())) {
 				return false;
 			} else {
 				eat = true;
 			}
 		}
-		if (target.canMakeMove(dest, eat))
-			return true;
+		if (target.canMakeMove(offset, eat)) {
+			if (pathClear(move, eat)) {
+				return true;
+			}
+		}
 		return false;
 	}
 
+	// checks if the path to move is clear
+	private boolean pathClear(int[] position, boolean eats) {
+
+		int maxX = Math.max(position[0], position[2]);
+		int maxY = Math.max(position[1], position[3]);
+		int minX = Math.min(position[0], position[2]);
+		int minY = Math.min(position[1], position[3]);
+
+		if (maxX == minX) {
+			for (int y = minY + 1; y < maxY; y++) {
+				System.out.printf("%d:%d -> %s\n", minX, y, board[minX][y]);
+				if (board[minX][y] != null)
+					if (!skipCell(eats, position, minX, y))
+						return false;
+			}
+		} else if (maxY == minY) {
+			for (int x = minX + 1; x < maxX; x++) {
+				System.out.printf("%d:%d -> %s\n", x, minY, board[x][minY]);
+				if (board[x][minY] != null)
+					if (!skipCell(eats, position, x, minY))
+						return false;
+			}
+		} else {
+			int df = minY - minX;
+			for (int x = minX; x <= maxX; x++) {
+				System.out.printf("%d:%d -> %s\n", x, x + df, board[x][x + df]);
+				if (board[x][x + df] != null) {
+					if (!skipCell(eats, position, x, x + df))
+						return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	// skips the end movement cell
+	private boolean skipCell(boolean eats, int[] temp, int x, int y) {
+		return eats || (x == temp[2] && y == temp[3]);
+	}
+
+	// calculate the movement relative delta
 	private int[] calculateOffset(int[] position) {
 		int[] dest = { position[2] - position[0], position[3] - position[1] };
 		return dest;
 	}
 
+	// parses and validates the input string
 	private int[] validateInput(char[] position) {
 		if (position.length != 4)
 			return null;
@@ -102,17 +150,20 @@ public class Board {
 		return target;
 	}
 
+	// tries to move the pieces
 	public boolean movePiece(char[] movement) {
-		int[] position = validateInput(movement);
-		if (position == null)
+		int[] move = validateInput(movement);
+		if (move == null)
 			return false;
-		if (!canMakeMovement(position))
+		if (!canMakeMovement(move))
 			return false;
-		makeMove(position);
+		movements.add(move);
+		makeMove(move);
 		return true;
 
 	}
 
+	// actually moves the piece on the board
 	private void makeMove(int[] position) {
 		if (board[position[2]][position[3]] != null)
 			death.add(board[position[2]][position[3]]);
