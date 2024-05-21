@@ -33,6 +33,11 @@ public class Board {
 		setStatus(GameStatus.READY);
 	}
 
+	public void initBoard(Piece p) {
+		board[3][4] = p;
+		setStatus(GameStatus.READY);
+	}
+
 	public void placePieces(Color c) {
 		int p, j;
 		if (c.equals(Color.WHITE)) {
@@ -78,6 +83,8 @@ public class Board {
 	private boolean canMakeMovement(int[] move) {
 		Piece target = board[move[0]][move[1]];
 		if (target == null)
+			return false;
+		if (!target.getPlayer().equals(getPlayer()))
 			return false;
 		int[] offset = calculateOffset(move);
 		Piece destPlace = board[move[2]][move[3]];
@@ -133,7 +140,7 @@ public class Board {
 
 	// skips the end movement cell
 	private boolean skipCell(boolean eats, int[] temp, int x, int y) {
-		return eats || (x == temp[2] && y == temp[3]);
+		return (eats || (x == temp[2] && y == temp[3]) || (x == temp[0] && y == temp[1]));
 	}
 
 	// calculate the movement relative delta

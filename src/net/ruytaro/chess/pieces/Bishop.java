@@ -23,7 +23,11 @@ public class Bishop extends Piece {
 		for (int i = 1; i < 8; i++) {
 			int aux = (10 + i) * 100 + (10 + i);
 			movements.put(aux, true);
+			aux = (10 + i) * 100 + (10 - i);
+			movements.put(aux, true);
 			aux = (10 - i) * 100 + (10 - i);
+			movements.put(aux, true);
+			aux = (10 + i) * 100 + (10 - i);
 			movements.put(aux, true);
 		}
 	}

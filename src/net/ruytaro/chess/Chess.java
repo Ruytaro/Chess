@@ -2,11 +2,14 @@ package net.ruytaro.chess;
 
 import java.util.Scanner;
 
+import net.ruytaro.chess.pieces.Queen;
+
 public class Chess {
 
 	public static void main(String[] args) {
 		Board game = new Board();
-		game.initBoard();
+		// game.initBoard();
+		game.initBoard(new Queen(Color.WHITE));
 		playGame(game);
 	}
 
@@ -33,7 +36,6 @@ public class Chess {
 					}
 					ok = game.movePiece(in.toCharArray());
 				}
-				;
 			}
 		} while (gameOngoing(game));
 		sc.close();
