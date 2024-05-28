@@ -2,6 +2,7 @@ package net.ruytaro.chess;
 
 import java.util.Scanner;
 
+import net.ruytaro.chess.pieces.Pawn;
 import net.ruytaro.chess.pieces.Queen;
 
 public class Chess {
@@ -9,13 +10,13 @@ public class Chess {
 	public static void main(String[] args) {
 		Board game = new Board();
 		// game.initBoard();
-		game.initBoard(new Queen(Color.WHITE));
+		game.initBoard(new Pawn(Color.WHITE));
 		playGame(game);
 	}
 
 	public static void playGame(Board game) {
 		Scanner sc = new Scanner(System.in);
-		Color[] turn = { Color.WHITE, Color.BLACK };
+		Color[] turn = { Color.WHITE};//, Color.BLACK };
 		game.setStatus(GameStatus.ONGOING);
 
 		boolean quit = false;

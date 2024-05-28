@@ -18,6 +18,7 @@ public class Board {
 	private GameStatus status = GameStatus.PREPARING;
 	private List<int[]> movements = new LinkedList<int[]>();
 	private Color player;
+	char promo;
 
 	public Color getPlayer() {
 		return player;
@@ -151,7 +152,7 @@ public class Board {
 
 	// parses and validates the input string
 	private int[] validateInput(char[] position) {
-		if (position.length != 4)
+		if (position.length < 4 || position.length > 5)
 			return null;
 		char[] temp = { 'A', '1', 'A', '1' };
 		int[] target = new int[4];
@@ -160,6 +161,11 @@ public class Board {
 			if (t > 7 || t < 0)
 				return null;
 			target[i] = t;
+		}
+		if (position.length == 5) {
+			promo = position[4];
+		} else {
+			promo = ' ';
 		}
 		return target;
 	}
@@ -172,13 +178,12 @@ public class Board {
 		if (!canMakeMovement(move))
 			return false;
 		movements.add(move);
-		makeMove(move);
-		return true;
+		return makeMove(move);
 
 	}
 
 	// actually moves the piece on the board
-	private void makeMove(int[] position) {
+	private boolean makeMove(int[] position) {
 		if (board[position[2]][position[3]] != null) {
 			Piece p = board[position[2]][position[3]];
 			if (p instanceof King)
@@ -188,8 +193,33 @@ public class Board {
 
 		}
 		board[position[0]][position[1]].move();
-		board[position[2]][position[3]] = board[position[0]][position[1]];
+		Piece t = board[position[0]][position[1]];
+		if (isPromotion(position))
+			t = getPromotedPiece();
+		if (t == null)
+			return false;
+		board[position[2]][position[3]] = t;
 		board[position[0]][position[1]] = null;
+		return true;
+	}
+
+	private Piece getPromotedPiece() {
+		switch (promo) {
+		case 'Q':
+			return new Queen(player);
+		case 'N':
+			return new Knight(player);
+		case 'B':
+			return new Bishop(player);
+		case 'R':
+			return new Rook(player);
+		default:
+			return null;
+		}
+	}
+
+	private boolean isPromotion(int[] position) {
+		return ((player.equals(Color.WHITE) && position[3] == 7) || (player.equals(Color.BLACK) && position[3] == 0));
 	}
 
 	public GameStatus getStatus() {
