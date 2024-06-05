@@ -1,6 +1,7 @@
 package net.ruytaro.chess;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import net.ruytaro.chess.pieces.Bishop;
@@ -14,11 +15,13 @@ import net.ruytaro.chess.pieces.Rook;
 public class Board {
 
 	private Piece[][] board = new Piece[8][8];
-	private List<Piece> death = new LinkedList<Piece>();
+	private List<Piece> death = new ArrayList<Piece>();
 	private GameStatus status = GameStatus.PREPARING;
-	private List<int[]> movements = new LinkedList<int[]>();
+	private List<String> movements = new ArrayList<String>();
 	private Color player;
-	char promo;
+	private Color winner;
+
+	Color[] turn = { Color.WHITE, Color.BLACK };
 
 	public Color getPlayer() {
 		return player;
@@ -37,6 +40,7 @@ public class Board {
 	public void initBoard(Piece p) {
 		board[3][4] = p;
 		setStatus(GameStatus.READY);
+		setPlayer(turn[0]);
 	}
 
 	public void placePieces(Color c) {
@@ -61,8 +65,10 @@ public class Board {
 		board[7][j] = new Rook(c);
 	}
 
+	// builds the string with the board
 	public String showBoard() {
-		String t = "   A B C D E F G H\n\n";
+		String legend = "   A B C D E F G H\n";
+		String t = legend + "\n";
 		for (int i = 0; i < 8; i++) {
 			int n = 8 - i;
 			t += n + "  ";
@@ -76,37 +82,60 @@ public class Board {
 			}
 			t += " " + n + "\n";
 		}
-		t += "\n   A B C D E F G H\n";
+		t += "\n" + legend;
 		return t;
+	}
+
+	// gets the player's king position
+	private int[] getKingPosition() {
+		for (int x = 0; x < 8; x++) {
+			for (int y = 0; y < 8; y++) {
+				Piece piece = board[x][y];
+				if (piece == null)
+					continue;
+				if (piece instanceof King && piece.getPlayer().equals(player)) {
+					int[] position = { 0, 0, x, y };
+					return position;
+				}
+			}
+		}
+		return null;
 	}
 
 	// checks if the movement is allowed
 	private boolean canMakeMovement(int[] move) {
-		Piece target = board[move[0]][move[1]];
-		if (target == null)
-			return false;
-		if (!target.getPlayer().equals(getPlayer()))
+		Piece source = board[move[0]][move[1]];
+		if (!validSource(source))
 			return false;
 		int[] offset = calculateOffset(move);
-		Piece destPlace = board[move[2]][move[3]];
-		boolean eat = false;
-		if (destPlace != null) {
-			if (destPlace.getPlayer().equals(target.getPlayer())) {
-				return false;
-			} else {
-				eat = true;
-			}
-		}
-		if (target.canMakeMove(offset, eat)) {
-			if (target instanceof Knight)
-				return true;
-			return pathClear(move, eat);
-		}
+		Piece destination = board[move[2]][move[3]];
+		if (!validDestination(destination))
+			return false;
+		if (!source.canMakeMove(offset, destination != null))
+			return false;
+		if (source instanceof Knight)
+			return true;
+		return pathClear(move);
+	}
+
+	private boolean validSource(Piece target) {
+		if (target == null)
+			return false;
+		if (target.getPlayer().equals(getPlayer()))
+			return true;
 		return false;
 	}
 
+	private boolean validDestination(Piece target) {
+		if (target == null)
+			return true;
+		if (target.getPlayer().equals(getPlayer()))
+			return false;
+		return true;
+	}
+
 	// checks if the path to move is clear
-	private boolean pathClear(int[] position, boolean eats) {
+	private boolean pathClear(int[] position) {
 		int maxX = Math.max(position[0], position[2]);
 		int maxY = Math.max(position[1], position[3]);
 		int minX = Math.min(position[0], position[2]);
@@ -114,24 +143,22 @@ public class Board {
 
 		if (maxX == minX) {
 			for (int y = minY + 1; y < maxY; y++) {
-				System.out.printf("%d:%d -> %s\n", minX, y, board[minX][y]);
 				if (board[minX][y] != null)
-					if (!skipCell(eats, position, minX, y))
+					if (!skipCell(position, minX, y))
 						return false;
 			}
 		} else if (maxY == minY) {
 			for (int x = minX + 1; x < maxX; x++) {
-				System.out.printf("%d:%d -> %s\n", x, minY, board[x][minY]);
 				if (board[x][minY] != null)
-					if (!skipCell(eats, position, x, minY))
+					if (!skipCell(position, x, minY))
 						return false;
 			}
 		} else {
-			int df = minY - minX;
+			boolean inverse = (position[0] + position[2]) == (position[1] + position[3]);
+			int df = minY - maxX;
 			for (int x = minX; x <= maxX; x++) {
-				System.out.printf("%d:%d -> %s\n", x, x + df, board[x][x + df]);
 				if (board[x][x + df] != null) {
-					if (!skipCell(eats, position, x, x + df))
+					if (!skipCell(position, x, x + df))
 						return false;
 				}
 			}
@@ -139,12 +166,16 @@ public class Board {
 		return true;
 	}
 
-	// skips the end movement cell
-	private boolean skipCell(boolean eats, int[] temp, int x, int y) {
-		return (eats || (x == temp[2] && y == temp[3]) || (x == temp[0] && y == temp[1]));
+	// skips the start and end cell of the move
+	private boolean skipCell(int[] temp, int x, int y) {
+		if (x == temp[2] && y == temp[3])
+			return true;
+		if (x == temp[0] && y == temp[1])
+			return true;
+		return false;
 	}
 
-	// calculate the movement relative delta
+	// calculate the move delta
 	private int[] calculateOffset(int[] position) {
 		int[] dest = { position[2] - position[0], position[3] - position[1] };
 		return dest;
@@ -152,81 +183,136 @@ public class Board {
 
 	// parses and validates the input string
 	private int[] validateInput(char[] position) {
-		if (position.length < 4 || position.length > 5)
+		char[] pat = { 'A', '1', 'A', '1' };
+		int l = position.length;
+		if (l < 4 || l > 5)
 			return null;
-		char[] temp = { 'A', '1', 'A', '1' };
-		int[] target = new int[4];
-		for (int i = 0; i < 4; i++) {
-			int t = position[i] - temp[i];
-			if (t > 7 || t < 0)
+		int[] movement = { 0, 0, 0, 0, 0 };
+		for (int p = 0; p < l; p++) {
+			int t = 0;
+			if (p < 4)
+				t = position[p] - pat[p];
+			if (t < 0 || t > 7)
 				return null;
-			target[i] = t;
+			if (p == 4)
+				t = position[p];
+			movement[p] = t;
 		}
-		if (position.length == 5) {
-			promo = position[4];
-		} else {
-			promo = ' ';
-		}
-		return target;
+		return movement;
 	}
 
 	// tries to move the pieces
-	public boolean movePiece(char[] movement) {
-		int[] move = validateInput(movement);
+	public boolean movePiece(String movement) {
+		int[] move = validateInput(movement.toCharArray());
 		if (move == null)
 			return false;
+		printData(move);
 		if (!canMakeMovement(move))
 			return false;
-		movements.add(move);
-		return makeMove(move);
+		Piece[][] temp = Arrays.copyOf(board, board.length);
+		makeMove(move);
+		if (isIlegal()) {
+			board = Arrays.copyOf(temp, temp.length);
+			return false;
+		}
+		movements.add(movement);
+		player = turn[movements.size() % 2];
+		return true;
+	}
 
+	private void printData(int[] position) {
+		System.out.printf("%d , %d\n",(position[0] - position[2]), (position[3] - position[1]));
+
+	}
+
+	// search for player forced Checks
+	private boolean isIlegal() {
+		boolean ilegal = false;
+		int[] move = getKingPosition();
+		for (int x = 0; x < 8; x++) {
+			for (int y = 0; y < 8; y++) {
+				Piece p = board[x][y];
+				if (p == null)
+					continue;
+				if (!p.getPlayer().equals(player)) {
+					move[0] = x;
+					move[1] = y;
+					if (canMakeMovement(move))
+						ilegal = true;
+				}
+			}
+		}
+		return ilegal;
 	}
 
 	// actually moves the piece on the board
 	private boolean makeMove(int[] position) {
-		if (board[position[2]][position[3]] != null) {
-			Piece p = board[position[2]][position[3]];
-			if (p instanceof King)
-				status = GameStatus.END;
-			death.add(p);
-			board[position[2]][position[3]] = null;
-
-		}
+		if (board[position[2]][position[3]] != null)
+			death.add(board[position[2]][position[3]]);
 		board[position[0]][position[1]].move();
 		Piece t = board[position[0]][position[1]];
-		if (isPromotion(position))
-			t = getPromotedPiece();
-		if (t == null)
-			return false;
+		if (isPromotion(t, position))
+			t = getPromotedPiece(position[4]);
 		board[position[2]][position[3]] = t;
 		board[position[0]][position[1]] = null;
 		return true;
 	}
 
-	private Piece getPromotedPiece() {
-		switch (promo) {
+	private Piece getPromotedPiece(int piece) {
+		switch (piece) {
 		case 'Q':
 			return new Queen(player);
-		case 'N':
-			return new Knight(player);
-		case 'B':
-			return new Bishop(player);
 		case 'R':
 			return new Rook(player);
+		case 'B':
+			return new Bishop(player);
+		case 'K':
+			return new Knight(player);
 		default:
-			return null;
+			return new Queen(player);
 		}
 	}
 
-	private boolean isPromotion(int[] position) {
-		return ((player.equals(Color.WHITE) && position[3] == 7) || (player.equals(Color.BLACK) && position[3] == 0));
+	private boolean isPromotion(Piece p, int[] position) {
+		if (!(p instanceof Pawn))
+			return false;
+		if (player.equals(Color.WHITE) && position[3] == 7)
+			return true;
+		if (player.equals(Color.BLACK) && position[3] == 0)
+			return true;
+		return false;
 	}
 
 	public GameStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(GameStatus status) {
+	private void setStatus(GameStatus status) {
 		this.status = status;
+	}
+
+	public Color getWinner() {
+		return winner;
+	}
+
+	public void setWinner(Color winner) {
+		this.winner = winner;
+	}
+
+	public String getMovements() {
+		String moves = "";
+		for (String move : movements) {
+			moves += move + "\n";
+		}
+		return moves;
+	}
+
+	public void start() {
+		status = GameStatus.ONGOING;
+		player = Color.WHITE;
+	}
+
+	public void end() {
+		status = GameStatus.END;
 	}
 }

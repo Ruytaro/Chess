@@ -27,7 +27,7 @@ public class Bishop extends Piece {
 			movements.put(aux, true);
 			aux = (10 - i) * 100 + (10 - i);
 			movements.put(aux, true);
-			aux = (10 + i) * 100 + (10 - i);
+			aux = (10 - i) * 100 + (10 + i);
 			movements.put(aux, true);
 		}
 	}
