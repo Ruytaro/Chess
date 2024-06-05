@@ -87,7 +87,7 @@ public class Board {
 	}
 
 	// gets the player's king position
-	private int[] getKingPosition() {
+	private int[] getKingPosition(Color player) {
 		for (int x = 0; x < 8; x++) {
 			for (int y = 0; y < 8; y++) {
 				Piece piece = board[x][y];
@@ -103,13 +103,13 @@ public class Board {
 	}
 
 	// checks if the movement is allowed
-	private boolean canMakeMovement(int[] move) {
+	private boolean canMakeMovement(int[] move, Color player) {
 		Piece source = board[move[0]][move[1]];
-		if (!validSource(source))
+		if (!validSource(source, player))
 			return false;
 		int[] offset = calculateOffset(move);
 		Piece destination = board[move[2]][move[3]];
-		if (!validDestination(destination))
+		if (!validDestination(destination, player))
 			return false;
 		if (!source.canMakeMove(offset, destination != null))
 			return false;
@@ -118,18 +118,18 @@ public class Board {
 		return pathClear(move);
 	}
 
-	private boolean validSource(Piece target) {
+	private boolean validSource(Piece target, Color player) {
 		if (target == null)
 			return false;
-		if (target.getPlayer().equals(getPlayer()))
+		if (target.getPlayer().equals(player))
 			return true;
 		return false;
 	}
 
-	private boolean validDestination(Piece target) {
+	private boolean validDestination(Piece target, Color player) {
 		if (target == null)
 			return true;
-		if (target.getPlayer().equals(getPlayer()))
+		if (target.getPlayer().equals(player))
 			return false;
 		return true;
 	}
@@ -154,12 +154,26 @@ public class Board {
 						return false;
 			}
 		} else {
-			boolean inverse = (position[0] + position[2]) == (position[1] + position[3]);
-			int df = minY - maxX;
-			for (int x = minX; x <= maxX; x++) {
-				if (board[x][x + df] != null) {
-					if (!skipCell(position, x, x + df))
-						return false;
+			if ((position[0] - position[1]) == (position[2] - position[3])) {
+				int df = position[3] - position[2];
+				for (int x = minX; x <= maxX; x++) {
+					int y = x + df;
+					if (!skipCell(position, x, y)) {
+						if (board[x][y] != null) {
+							return false;
+						}
+					}
+				}
+			} else {
+
+				int df = maxY - minX;
+				for (int x = minX; x <= maxX; x++) {
+					int y = df + x;
+					if (!skipCell(position, x, y)) {
+						if (board[x][y] != null) {
+							return false;
+						}
+					}
 				}
 			}
 		}
@@ -206,29 +220,45 @@ public class Board {
 		int[] move = validateInput(movement.toCharArray());
 		if (move == null)
 			return false;
-		printData(move);
-		if (!canMakeMovement(move))
+		if (!canMakeMovement(move, getPlayer()))
 			return false;
 		Piece[][] temp = Arrays.copyOf(board, board.length);
 		makeMove(move);
-		if (isIlegal()) {
+		if (isCheck(getPlayer())) {
 			board = Arrays.copyOf(temp, temp.length);
 			return false;
 		}
 		movements.add(movement);
-		player = turn[movements.size() % 2];
+		setPlayer(getOponent(getPlayer()));
+		if (isCheck(getPlayer()) && hasLost(getPlayer())) {
+			setWinner(getOponent(getPlayer()));
+			setStatus(GameStatus.END);
+		}
 		return true;
 	}
 
-	private void printData(int[] position) {
-		System.out.printf("%d , %d\n",(position[0] - position[2]), (position[3] - position[1]));
-
+	private boolean hasLost(Color player) {
+		int[] king = getKingPosition(player);
+		for (int x = 0; x < 8; x++) {
+			for (int y = 0; y < 8; y++) {
+				int[] move = { king[2], king[3], x, y };
+				if (canMakeMovement(move, player)) {
+					Piece[][] temp = Arrays.copyOf(board, board.length);
+					makeMove(move);
+					boolean lost = isCheck(getPlayer());
+					board = Arrays.copyOf(temp, temp.length);
+					if (!lost)
+						return false;
+				}
+			}
+		}
+		return true;
 	}
 
-	// search for player forced Checks
-	private boolean isIlegal() {
+	// search for Checks
+	private boolean isCheck(Color player) {
 		boolean ilegal = false;
-		int[] move = getKingPosition();
+		int[] move = getKingPosition(player);
 		for (int x = 0; x < 8; x++) {
 			for (int y = 0; y < 8; y++) {
 				Piece p = board[x][y];
@@ -237,12 +267,18 @@ public class Board {
 				if (!p.getPlayer().equals(player)) {
 					move[0] = x;
 					move[1] = y;
-					if (canMakeMovement(move))
+					if (canMakeMovement(move, getOponent(player)))
 						ilegal = true;
 				}
 			}
 		}
 		return ilegal;
+	}
+
+	private Color getOponent(Color player) {
+		if (player.equals(Color.WHITE))
+			return Color.BLACK;
+		return Color.WHITE;
 	}
 
 	// actually moves the piece on the board
